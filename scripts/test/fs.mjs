@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: null }); let e = 0; p.on('pageerror', x => { e++; console.log('[pageerror]', x.message); });
+await p.goto('http://localhost:8000/index.html'); await p.evaluate(() => { window.__fe = []; document.addEventListener('fullscreenerror', e => window.__fe.push('fserror')); const o = Element.prototype.requestFullscreen; Element.prototype.requestFullscreen = function () { window.__fe.push('called active=' + navigator.userActivation?.isActive); const r = o.call(this); r.then(() => window.__fe.push('ok'), x => window.__fe.push('rej ' + x.message)); return r; }; }); await p.click('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 90000 }); await p.waitForTimeout(800);
+const fs = () => p.evaluate(() => [!!document.fullscreenElement, document.getElementById('fsLabel').textContent, innerWidth, innerHeight, document.querySelector('canvas').clientWidth]);
+console.log('after enter', await fs());
+await p.click('#bFullTab', { force: true }); await p.waitForTimeout(500); console.log('toggle', await fs());
+await p.click('#bFullTab', { force: true }); await p.waitForTimeout(500); console.log('toggle', await fs());
+await p.keyboard.press('KeyF'); await p.waitForTimeout(500); console.log('F key', await fs());
+await p.click('#bHome'); await p.waitForTimeout(500); console.log('leave', await fs());
+console.log(await p.evaluate(() => window.__fe)); console.log('manifest', (await (await p.request.get('http://localhost:8000/manifest.json')).json()).display, 'errors', e); await b.close();

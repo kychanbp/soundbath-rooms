@@ -1,0 +1,12 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } }); let e = 0; p.on('pageerror', x => { e++; console.log('[pageerror]', x.message); });
+await p.goto('http://localhost:8000/index.html'); await p.click('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 90000 }); await p.waitForTimeout(600);
+const st = () => p.evaluate(() => { const s = __state; return { sit: s.sit, pose: s.pose, h: +s.poseH.toFixed(2), t: +s.sitT.toFixed(2), pitch: +s.pitch.toFixed(2), a: document.getElementById('sitLabel').textContent, b: document.getElementById('lieLabel').textContent }; });
+await p.click('#bRooms'); await p.waitForTimeout(450); await p.click('#rooms .card[data-room="himalayan"]'); await p.waitForTimeout(2500);
+await p.click('#bSit'); await p.waitForFunction(() => __state.sit === 1, null, { timeout: 25000 }); await p.waitForTimeout(4000); console.log('sit', await st());
+await p.screenshot({ path: '../../renders/sit.jpg', type: 'jpeg', quality: 85 });
+await p.click('#bLie'); await p.waitForTimeout(3500); console.log('change to lie', await st());
+await p.click('#bLie'); await p.waitForTimeout(800); console.log('get up', await st());
+await p.waitForFunction(() => !__state.target, null, { timeout: 25000 }); await p.click('#bLie'); await p.waitForFunction(() => __state.sit === 1, null, { timeout: 25000 }); await p.waitForTimeout(800);
+const r = await p.locator('#stick').boundingBox(); await p.mouse.move(r.x + 64, r.y + 64); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(500); console.log('stick gets up', await st(), 'errors', e); await b.close();

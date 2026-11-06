@@ -1,0 +1,13 @@
+import pw from 'playwright-core';
+const { webkit, devices } = pw;
+const b = await webkit.launch({ headless: true, executablePath: process.env.HOME + '/Library/Caches/ms-playwright/webkit-2227/pw_run.sh' });
+const c = await b.newContext({ ...devices['iPhone 14'] }); const p = await c.newPage(); let e = 0; p.on('response', r => { if (r.status() >= 400 && !/op.png/.test(r.url())) console.log(r.status(), r.url().slice(-60)); }); p.on('pageerror', x => { e++; console.log('[pageerror]', x.message.slice(0, 200)); });
+await p.goto('http://localhost:8000/index.html?lang=zh'); await p.waitForTimeout(800);
+await p.screenshot({ path: '../../renders/zh0.jpg', type: 'jpeg', quality: 80 }); console.log(await p.textContent('h1'), await p.evaluate(() => [document.documentElement.lang, !!document.documentElement.requestFullscreen, !!document.documentElement.webkitRequestFullscreen]));
+await p.tap('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 180000 }); await p.waitForTimeout(1200);
+console.log(await p.evaluate(() => ['bRooms', 'sitLabel', 'lieLabel', 'soundLabel', 'fsLabel', 'nowName'].map(i => document.getElementById(i).textContent)));
+await p.evaluate(() => { document.documentElement.requestFullscreen = undefined; document.documentElement.webkitRequestFullscreen = undefined; });
+await p.tap('#bFullTab'); await p.waitForTimeout(500); await p.screenshot({ path: '../../renders/zh1.jpg', type: 'jpeg', quality: 80 }); console.log('ios sheet', await p.evaluate(() => document.getElementById('sheetIos').classList.contains('open')));
+await p.tap('#iosClose'); await p.waitForTimeout(400); await p.tap('#bSettings'); await p.waitForTimeout(450); await p.screenshot({ path: '../../renders/zh2.jpg', type: 'jpeg', quality: 80 });
+await p.tap('#lEn'); await p.waitForTimeout(200); console.log(await p.evaluate(() => [document.getElementById('fsLabel').textContent, document.getElementById('nowName').textContent, document.querySelector('#rooms .card b').textContent, document.documentElement.lang]));
+console.log('errors', e); await b.close();

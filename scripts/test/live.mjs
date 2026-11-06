@@ -1,0 +1,6 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } }); let e = 0, bad = []; p.on('pageerror', x => { e++; console.log('[pageerror]', x.message); }); p.on('response', r => { if (r.status() >= 400 && !/op\.png/.test(r.url())) bad.push(r.status() + ' ' + r.url().slice(-50)); });
+await p.goto('https://kychanbp.github.io/soundbath-rooms/'); const t0 = Date.now(); await p.click('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 180000 }); console.log('ready in', Math.round((Date.now() - t0) / 1000), 's');
+for (const n of ['himalayan', 'cave']) { await p.click('#bRooms'); await p.waitForTimeout(450); await p.click(`#rooms .card[data-room="${n}"]`); await p.waitForFunction(n => __audio.rooms[n]?.ready && __rooms[n].teacher, n, { timeout: 120000 }); await p.waitForTimeout(1500); console.log(n, await p.evaluate(() => [__audio.ctx.state, document.getElementById('nowName').textContent])); }
+await p.screenshot({ path: '../../renders/live.jpg', type: 'jpeg', quality: 80 }); console.log('errors', e, 'bad', bad.slice(0, 5)); await b.close();

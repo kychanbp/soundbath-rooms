@@ -1,0 +1,28 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
+p.on('crash', () => console.log('[PAGE CRASH]')); p.on('close', () => console.log('[page close]')); b.on('disconnected', () => console.log('[browser gone]'));
+let errs = 0; p.on('pageerror', e => { errs++; console.log('[pageerror]', e.message); }); p.on('console', m => { if (m.type() === 'error' && !/404/.test(m.text())) { errs++; console.log('[err]', m.text().slice(0, 300)); } });
+await p.goto('http://localhost:8000/index.html');
+await p.click('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 90000 }); await p.waitForTimeout(3200);
+const pos = () => p.evaluate(() => ({ x: +__state.x.toFixed(2), y: +__state.y.toFixed(2), yaw: +__state.yaw.toFixed(2) }));
+const hold = async (dx, dy, ms) => { const r = await p.locator('#stick').boundingBox(), cx = r.x + r.width / 2, cy = r.y + r.height / 2; await p.mouse.move(cx, cy); await p.mouse.down(); await p.mouse.move(cx + dx, cy + dy, { steps: 4 }); await p.waitForTimeout(ms); await p.mouse.up(); };
+console.log('start', await pos());
+await hold(0, -60, 1500); console.log('forward', await pos());
+await hold(0, -20, 1000); console.log('half push', await pos());
+await hold(55, 0, 900); console.log('turn right', await pos());
+await hold(0, 60, 800); console.log('back', await pos());
+await p.waitForTimeout(300); const a = await pos(); await p.waitForTimeout(500); const c = await pos(); console.log('stopped', a.x === c.x && a.y === c.y);
+await p.click('#bSettings'); await p.waitForTimeout(450); await p.screenshot({ path: '../../renders/ui_set.jpg', type: 'jpeg', quality: 85 }); await p.locator('#vol').fill('0.3'); await p.waitForTimeout(400);
+console.log('gain', await p.evaluate(() => [__audio.vol, +__audio.master.gain.value.toFixed(3)]));
+await p.click('#spFast'); console.log('fast', await p.evaluate(() => document.getElementById('spFast').className)); await p.mouse.click(600, 60); await p.waitForTimeout(400);
+await p.click('#bSound'); await p.waitForTimeout(500); console.log('muted', await p.evaluate(() => +__audio.master.gain.value.toFixed(3)));
+await p.click('#bSound'); await p.click('#bRooms'); await p.waitForTimeout(450);
+await p.screenshot({ path: '../../renders/ui.jpg', type: 'jpeg', quality: 85 });
+for (const t of ['Cave drum', 'Crystal bowls', 'Forest path']) { await p.click(`#rooms .card:has(b:text-is("${t}"))`).catch(e => console.log('click fail', t)); await p.waitForTimeout(3500); console.log(t, await pos(), await p.evaluate(() => [document.querySelector('#rooms .here b')?.textContent, document.getElementById('nowName').textContent])); await p.click('#bRooms'); await p.waitForTimeout(450); }
+await p.mouse.click(600, 60); await p.waitForTimeout(300); await p.click('#bSettings'); await p.waitForTimeout(400); await p.click('#bHide'); await p.waitForTimeout(300); console.log('hud hidden', await p.locator('#pad').isHidden()); await p.click('#show'); console.log('hud shown', await p.locator('#pad').isVisible());
+await p.click('#bRooms'); await p.waitForTimeout(450); await p.click('#rooms .card[data-room="rin"]'); await p.waitForTimeout(3500); await p.evaluate(() => document.getElementById('help').style.display = 'none');
+await p.waitForTimeout(2500); await p.screenshot({ path: '../../renders/ui_main.jpg', type: 'jpeg', quality: 85 }); await p.click('#bRooms'); await p.waitForTimeout(450); await p.screenshot({ path: '../../renders/ui_rooms.jpg', type: 'jpeg', quality: 85 }); await p.mouse.click(600, 40); await p.waitForTimeout(350);
+await p.setViewportSize({ width: 390, height: 780 }); await p.waitForTimeout(600); await p.screenshot({ path: '../../renders/ui_phone.jpg', type: 'jpeg', quality: 85 });
+console.log('overflow', await p.evaluate(() => [document.documentElement.scrollWidth, innerWidth]));
+console.log('errors', errs); await b.close();

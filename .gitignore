@@ -1,0 +1,7 @@
+data/
+__pycache__/
+*.blend
+*.blend1
+node_modules/
+audio/wav/
+scripts/runpod/on.sh

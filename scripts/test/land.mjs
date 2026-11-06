@@ -1,0 +1,8 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } }); let e = 0; p.on('pageerror', x => { e++; console.log('[pageerror]', x.message); }); p.on('response', r => { if (r.status() >= 400) console.log(r.status(), r.url().slice(-60)); }); p.on('console', m => { if ((m.type() === 'error' && !/404/.test(m.text())) || /Shader Error/.test(m.text())) { e++; console.log('[err]', m.text().slice(0, 700)); } });
+await p.goto('http://localhost:8000/index.html?auto=1'); await p.waitForFunction('window.__ready===true', null, { timeout: 120000 }); await p.waitForTimeout(1500);
+await p.evaluate(() => { document.body.classList.add('nohud'); for (const id of ['fade', 'help', 'title', 'home']) { const x = document.getElementById(id); x.style.transition = 'none'; x.style.opacity = 0; if (id !== 'fade') x.style.display = 'none'; } });
+const views = process.argv.slice(2);
+for (let i = 0; i < views.length; i++) { const v = views[i].split(',').map(Number); await p.evaluate(v => { const h = __state; window.__shot = [v[0], v[1], v[2] + __heightAt(v[0], v[1]), v[3], v[4]]; }, v); await p.waitForTimeout(2200); await p.screenshot({ path: `../../renders/l_${i}.jpg`, type: 'jpeg', quality: 86 }); }
+console.log(JSON.stringify(await p.evaluate(() => ({ calls: __renderer.info.render.calls, tris: __renderer.info.render.triangles, tex: __renderer.info.memory.textures }))), 'errors', e); await b.close();

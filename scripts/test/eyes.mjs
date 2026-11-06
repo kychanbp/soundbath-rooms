@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
+const p = await b.newPage({ viewport: { width: 1280, height: 720 } }); let e = 0; p.on('pageerror', x => { e++; console.log('[pageerror]', x.message); });
+await p.goto('http://localhost:8000/index.html'); await p.click('#enter'); await p.waitForFunction('window.__ready===true', null, { timeout: 120000 }); await p.waitForTimeout(600);
+await p.click('#bRooms'); await p.waitForTimeout(400); await p.click('#rooms .card[data-room="himalayan"]'); await p.waitForFunction(() => __audio.rooms.himalayan?.ready, null, { timeout: 60000 }); await p.waitForTimeout(2000);
+await p.screenshot({ path: '../../renders/e0.jpg', type: 'jpeg', quality: 80 });
+await p.click('#bEyes'); await p.waitForTimeout(4200); await p.screenshot({ path: '../../renders/e1.jpg', type: 'jpeg', quality: 80 });
+const a = await p.evaluate(async () => { const A = __audio, an = A.ctx.createAnalyser(); an.fftSize = 8192; A.master.connect(an); const d = new Float32Array(8192); let m = 0; for (let i = 0; i < 25; i++) { await new Promise(r => setTimeout(r, 400)); an.getFloatTimeDomainData(d); let s = 0; for (const v of d) s += v * v; m = Math.max(m, Math.sqrt(s / 8192)); } return [+m.toFixed(4), A.ctx.state, getComputedStyle(document.getElementById('eyes')).opacity]; });
+console.log('with eyes closed: sound, state, overlay', a);
+await p.mouse.click(600, 300); await p.waitForTimeout(3200); console.log('opened', await p.evaluate(() => [getComputedStyle(document.getElementById('eyes')).display]));
+console.log('errors', e); await b.close();
