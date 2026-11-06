@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Sound Bath Rooms</title>
+<link rel="icon" href="icon192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sound Bath">
+<meta name="theme-color" content="#12110e">
+<style>
+:root{--ink:#f6f1e7;--dim:#c9c1b1;--bg:#12110e;--glass:#17150fb8;--glass2:#ffffff14;--line:#ffffff24;--gold:#e0b873;--r:18px;--ease:cubic-bezier(.2,.8,.2,1);
+ --safe-b:env(safe-area-inset-bottom);--safe-t:env(safe-area-inset-top);--safe-l:env(safe-area-inset-left);--safe-r:env(safe-area-inset-right)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}button,input{touch-action:manipulation;font:inherit;color:inherit}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+canvas{position:fixed;inset:0;display:block;touch-action:none}
+svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+/* start screen */
+#home{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;background:radial-gradient(ellipse at 50% 35%,#2b2619,#0c0b09 75%);transition:opacity 1.2s;text-align:center}
+#home.hide{opacity:0;pointer-events:none}
+h1{font:400 clamp(30px,6vw,46px)/1.2 Georgia,"Songti SC","Noto Serif CJK SC",serif;letter-spacing:.04em;margin:0}
+#home p{margin:0;color:var(--dim);max-width:30em}
+.primary{border:0;border-radius:999px;padding:14px 38px;font-size:17px;font-weight:600;background:var(--gold);color:#1c1608;cursor:pointer;transition:transform .15s var(--ease)}
+.primary:active{transform:scale(.97)}
+#load{color:var(--dim);min-height:1.4em;font-size:13px}
+.langlink{border:0;background:none;color:var(--dim);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px}
+.note{color:var(--dim);margin:0 0 10px}.steps{margin:0 0 14px;padding-left:22px;line-height:1.9}.wide{width:100%}
+
+/* top pill: what is playing */
+#now{position:fixed;z-index:6;top:calc(12px + var(--safe-t));left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);font-size:13px;white-space:nowrap;max-width:calc(100vw - 32px);transition:opacity .8s}
+#now b{font-weight:600}#now span{color:var(--dim);font-variant-numeric:tabular-nums}
+#now i{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 2.4s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* tab bar */
+#tabs{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe-b));display:none;gap:2px;padding:6px;border-radius:24px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--line);box-shadow:0 10px 30px #0006;transition:opacity .8s}
+.tab{min-width:62px;white-space:nowrap;min-height:54px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;border-radius:18px;background:none;font-size:11px;font-weight:500;color:var(--dim);cursor:pointer;transition:background .15s,color .15s}
+.tab:hover{background:var(--glass2);color:var(--ink)}.tab:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.tab.on{color:var(--gold);background:var(--glass2)}
+.tab.main{color:#1c1608;background:var(--gold)}.tab.main:hover{background:#ecc988;color:#1c1608}
+
+/* joystick */
+#pad{position:fixed;z-index:5;display:none;left:calc(24px + var(--safe-l));bottom:calc(24px + var(--safe-b));touch-action:none;transition:opacity .8s}
+#stick{position:relative;width:128px;height:128px;border-radius:50%;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);touch-action:none;cursor:grab;box-shadow:0 10px 30px #0005}
+#stick::before,#stick::after{content:"";position:absolute;left:50%;margin-left:-5px;border:5px solid transparent;opacity:.5}
+#stick::before{top:8px;border-bottom:7px solid var(--ink);border-top:0}#stick::after{bottom:8px;border-top:7px solid var(--ink);border-bottom:0}
+#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:linear-gradient(#fff6,#fff2),var(--ink);box-shadow:0 3px 12px #0008;pointer-events:none;transition:transform .14s var(--ease)}
+#stick.on{cursor:grabbing}#stick.on #knob{transition:none;background:var(--gold)}
+
+/* sheets */
+#scrim{position:fixed;inset:0;z-index:8;background:#0006;opacity:0;pointer-events:none;transition:opacity .25s}
+#scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;z-index:9;left:50%;bottom:0;width:min(520px,100%);max-height:calc(100dvh - 40px);overflow:auto;transform:translate(-50%,105%);visibility:hidden;padding:10px 18px calc(20px + var(--safe-b));border-radius:22px 22px 0 0;background:#1c1a14f2;backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border:1px solid var(--line);border-bottom:0;transition:transform .32s var(--ease),visibility .32s}
+.sheet.open{transform:translate(-50%,0);visibility:visible}
+.grab{width:38px;height:4px;border-radius:2px;background:#fff4;margin:0 auto 10px}
+.sheet h2{font-size:17px;font-weight:600;margin:0 0 12px}
+#rooms{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{position:relative;padding:0;border:0;border-radius:14px;overflow:hidden;background:#000;cursor:pointer;text-align:left;aspect-ratio:16/9;transition:transform .15s var(--ease)}
+.card:active{transform:scale(.98)}.card:focus-visible{outline:2px solid var(--gold)}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.82}
+.card b{position:absolute;left:10px;right:10px;bottom:8px;font-size:13.5px;font-weight:600;text-shadow:0 1px 6px #000c}
+.card::after{content:"";position:absolute;inset:40% 0 0;background:linear-gradient(transparent,#000a)}.card b{z-index:1}
+.card.here{box-shadow:0 0 0 2px var(--gold)}
+.card.here i{position:absolute;z-index:1;top:8px;right:8px;padding:2px 8px;border-radius:999px;background:var(--gold);color:#1c1608;font:600 11px/1.5 inherit;font-style:normal}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:52px;padding:6px 0;border-bottom:1px solid var(--line)}
+.row label,.row>span{font-size:15px}
+.row input[type=range]{flex:1;max-width:60%;accent-color:var(--gold)}
+.sw{position:relative;width:50px;height:30px;border:0;border-radius:15px;background:#fff3;cursor:pointer;transition:background .2s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0006;transition:transform .2s var(--ease)}
+.sw[aria-checked=true]{background:var(--gold)}.sw[aria-checked=true]::after{transform:translateX(20px)}
+.seg{display:flex;padding:3px;border-radius:11px;background:#fff1}.seg button{border:0;background:none;padding:6px 16px;border-radius:9px;font-size:14px;color:var(--dim);cursor:pointer}
+.seg button.on{background:#fff2;color:var(--ink);font-weight:600}
+.danger{width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:#ffffff12;color:#f3a593;font-size:15px;font-weight:600;cursor:pointer}
+
+#eyes{position:fixed;inset:0;z-index:15;display:none;align-items:flex-end;justify-content:center;padding-bottom:calc(16vh + var(--safe-b));background:radial-gradient(ellipse at 50% 42%,#1d0c07,#060302 72%);opacity:0;transition:opacity 2.8s ease;cursor:pointer;color:#c9b8a4;font-size:14px;letter-spacing:.02em}
+#eyes.show{display:flex}#eyes.on{opacity:1}#eyes span{opacity:0;transition:opacity 1.5s}#eyes.hint span{opacity:.8}
+#title{position:fixed;top:17%;left:0;right:0;text-align:center;z-index:4;pointer-events:none;opacity:0;transition:opacity 2s;text-shadow:0 2px 12px #000a;padding:0 16px}
+#title b{display:block;font:400 clamp(24px,4.4vw,38px)/1.2 Georgia,"Songti SC",serif}#title small{color:var(--dim);font-size:14px}
+#help{position:fixed;top:calc(52px + var(--safe-t));left:0;right:0;text-align:center;color:#fffc;text-shadow:0 1px 4px #000;font-size:13px;z-index:4;transition:opacity 2s;pointer-events:none;padding:0 20px}
+#fade{position:fixed;inset:0;background:#000;opacity:1;transition:opacity 2.5s;pointer-events:none;z-index:3}
+#show{position:fixed;z-index:6;right:calc(14px + var(--safe-r));bottom:calc(14px + var(--safe-b));display:none;width:44px;height:44px;padding:10px;border-radius:50%;border:1px solid var(--line);background:var(--glass);color:var(--ink);cursor:pointer}
+#VRButton{z-index:7!important;bottom:calc(92px + var(--safe-b))!important}
+
+body.playing #tabs{display:flex}body.playing #pad{display:block}body.playing #now{display:flex}
+body.quiet #tabs,body.quiet #pad,body.quiet #now{opacity:.14}body.quiet #tabs:hover,body.quiet #pad:hover,body.quiet #tabs:focus-within{opacity:1}
+@media (hover:none){body.quiet #tabs{opacity:.7}body.quiet #pad{opacity:.4}}
+body.intro #tabs,body.intro #pad,body.intro #now,body.intro #help{opacity:0!important;pointer-events:none}
+body.nohud #tabs,body.nohud #pad,body.nohud #now{display:none}body.nohud.playing #show{display:block}
+
+/* phone upright: stick centred above a full width bar */
+@media (max-width:720px){#tabs{left:0;right:0;transform:none;bottom:0;border-radius:18px 18px 0 0;border-width:1px 0 0;justify-content:space-around;padding:6px 8px calc(6px + var(--safe-b))}.tab{flex:1;min-width:0;padding:6px 1px;font-size:9.5px}.tab svg.i{width:22px;height:22px}#pad{left:14px;margin-left:0;bottom:calc(92px + var(--safe-b))}#stick{width:112px;height:112px}.tab.main{flex:1.1}}
+/* phone on its side: rail at the right, stick at the left */
+@media (max-height:480px) and (orientation:landscape){#tabs{left:auto;right:calc(10px + var(--safe-r));top:50%;bottom:auto;transform:translateY(-50%);flex-direction:column;padding:5px;border-radius:20px}.tab{min-width:60px;min-height:42px;flex:none;font-size:9.5px;padding:3px}.tab svg.i{width:19px;height:19px}#pad{left:calc(16px + var(--safe-l));margin-left:0;bottom:calc(14px + var(--safe-b))}#stick{width:112px;height:112px}.sheet{max-height:100dvh;width:min(560px,calc(100% - 90px));left:calc(50% - 40px)}#rooms{grid-template-columns:repeat(3,1fr)}#title{top:10%}#help{top:44px;left:150px;right:90px}#home{gap:10px;padding:12px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="home">
+  <h1 data-t="appTitle">Sound Bath Rooms</h1>
+  <p data-t="intro"></p>
+  <button class="primary" id="enter" data-t="enter">Enter</button>
+  <div id="load" data-t="headphones"></div>
+  <button class="langlink" id="langHome"></button>
+</div>
+<div id="fade"></div>
+<div id="help"></div>
+<div id="title"><b></b><small></small></div>
+<div id="now"><i></i><b id="nowName">Forest path</b><span id="nowTime"></span></div>
+
+<div id="pad"><div id="stick" role="application" aria-label="Walking joystick. Push up to walk, left or right to turn."><div id="knob"></div></div></div>
+
+<nav id="tabs" aria-label="Main">
+  <button class="tab" id="bRooms" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span data-t="rooms">Huts</span></button>
+  <button class="tab" id="bSit" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.4"/><path d="M12 8v6M7 11c1.5 1 3 1.5 5 1.5s3.500-.5 5-1.500M12 14c-2.500.3-6 1.700-7 3.500-.6 1.100.5 2 2 2h10c1.500 0 2.600-.9 2-2-1-1.800-4.500-3.200-7-3.500z"/></svg><span id="sitLabel" data-t="sit">Sit</span></button>
+  <button class="tab" id="bLie" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M3 18v-8M3 15h18v3M21 15v-2a3 3 0 0 0-3-3H10v5"/><circle cx="6.5" cy="11" r="1.8"/></svg><span id="lieLabel" data-t="lie">Lie down</span></button>
+  <button class="tab" id="bEyes"><svg class="i" viewBox="0 0 24 24"><path d="M3 10c2.5 3.2 5.5 4.8 9 4.800s6.5-1.6 9-4.8M6.5 13.2 5 15.5M12 14.8V17.5M17.5 13.2 19 15.5"/></svg><span data-t="eyes">Close eyes</span></button>
+  <button class="tab" id="bSound" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 10v4h3l5 4V6L7 10H4z"/><path id="waves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><span id="soundLabel" data-t="sound">Sound</span></button>
+  <button class="tab" id="bFullTab" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path id="fsIn" d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><path id="fsOut" style="display:none" d="M9 4v4a1 1 0 0 1-1 1H4M20 9h-4a1 1 0 0 1-1-1V4M15 20v-4a1 1 0 0 1 1-1h4M4 15h4a1 1 0 0 1 1 1v4"/></svg><span id="fsLabel" data-t="full">Full screen</span></button>
+  <button class="tab" id="bSettings" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span data-t="settings">Settings</span></button>
+</nav>
+
+<div id="eyes" role="button" aria-label="Open your eyes"><span data-t="eyesOpen"></span></div>
+<div id="scrim"></div>
+<section class="sheet" id="sheetRooms" aria-label="Rooms"><div class="grab"></div><h2 data-t="goto"></h2><div id="rooms"></div></section>
+<section class="sheet" id="sheetSet" aria-label="Settings"><div class="grab"></div><h2 data-t="settings"></h2>
+  <div class="row"><label for="vol" data-t="volume"></label><input id="vol" type="range" min="0" max="1.5" step=".05" value="1"></div>
+  <div class="row"><span data-t="speed"></span><div class="seg" role="group" aria-label="Walking speed"><button id="spSlow" class="on" data-t="slow"></button><button id="spFast" data-t="fast"></button></div></div>
+  <div class="row"><span data-t="language"></span><div class="seg" role="group" aria-label="Language"><button id="lEn">English</button><button id="lZh">简体中文</button></div></div>
+  <div class="row"><span data-t="seeMe"></span><button class="sw" id="bMe" role="switch" aria-checked="true" aria-label="See myself"></button></div>
+  <div class="row"><span data-t="hide"></span><button class="sw" id="bHide" role="switch" aria-checked="false" aria-label="Hide controls"></button></div>
+  <button class="danger" id="bHome" data-t="end"></button>
+</section>
+<section class="sheet" id="sheetIos" aria-label="Full screen"><div class="grab"></div><h2 data-t="iosTitle"></h2><p class="note" data-t="iosBody"></p>
+  <ol class="steps"><li data-t="ios1"></li><li data-t="ios2"></li><li data-t="ios3"></li></ol>
+  <button class="primary wide" id="iosClose" data-t="close"></button>
+</section>
+<button id="show" aria-label="Show controls"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+<script type="module" src="main.js"></script>
+</body>
+</html>
